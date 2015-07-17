@@ -1,14 +1,9 @@
 var express 		= require( "express" )
 ,	parser 			= require( "body-parser" )
-,	route 			= require( "./config/route" )
 ,	orm 			= require( "./config/database" )
-,	NodeGeocoder	= require( "node-geocoder" )
-,	geocoder 		= require('node-geocoder')('google')
 ,	app 			= express( )
 ,	http 			= require('http').Server(app);
 
-
-global[ "DB" ] 		= orm;
 
 var cors = function cors ( request , response , next ) {	
 	response.header( "Access-Control-Allow-Origin" , "*" );
@@ -25,7 +20,8 @@ app.use( parser.urlencoded( { "extended": false } ) );
 app.use( cors );
 app.use('/', express.static( __dirname + '/web' ));
 
-route.set( app , __dirname );
+
+orm.getUnits();
 
 
 app.listen( 9000, function (){
