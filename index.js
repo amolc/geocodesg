@@ -22,6 +22,7 @@ app.use('/', express.static( __dirname + '/web' ));
 
 
 orm.getUnits();
+orm.getMRTs();
 
 
 app.listen( 9000, function (){

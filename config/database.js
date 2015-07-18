@@ -9,14 +9,15 @@ var mysql 			= require( "mysql" )
 						"database": 'transparent'
 					} )
 
-, geoCrud 			= CRUD( db, 'tag_unit' );
+, crudUnit 			= CRUD( db, 'tag_unit' )
+, crudMRT			= CRUD( db, 'tag_mrt');
+
 
 
 module.exports = {
 	"getUnits": function getUnits ( callback , param ){
 		
-		
-		geoCrud.load({}, function ( err, val ){
+		crudUnit.load({}, function ( err, val ){
 			
 			val.map ( function ( data ){
 				if( data.longitude === '0' && data.latitude === '0' ){
@@ -27,7 +28,7 @@ module.exports = {
 
 							res.map ( function ( pin ) {
 								
-								geoCrud.update(
+								crudUnit.update(
 									{
 										'unit_id': data.unit_id
 									},
@@ -37,7 +38,7 @@ module.exports = {
 
 									}, function ( err, vals ){
 
-										console.log( vals );
+										console.log( "Successfully Updated" );
 									
 									});
 
@@ -46,10 +47,72 @@ module.exports = {
 						})
 
 						.catch( function ( err ){
-							console.log( err );
+							function TimeoutHandler()
+							{
+							  clearTimeout(id);
+							  console.log ('CLEAR');
+							}
+
+							var id;
+							id = setTimeout(TimeoutHandler, 2000);
+							console.log ('SET');
 						});		
 
 					
+
+				}else{
+
+				}
+			});
+			
+		});
+
+	},
+
+	"getMRTs": function getMRTs ( callback, param ){
+
+		crudMRT.load({}, function ( err, val ){
+			
+			val.map ( function ( data ){
+
+				if( data.longitude === '0' && data.latitude === '0' ){
+
+						geocoder.geocode ( data.mrt_name + ", Singapore" )
+
+						.then ( function ( res ) {
+
+							res.map ( function ( pin ) {
+								
+								crudMRT.update(
+									{
+										'mrt_id': data.mrt_id
+									},
+									{
+										'latitude': pin.latitude,
+										'longitude': pin.longitude
+
+									}, function ( err, vals ){
+
+										console.log( "Successfully Updated" );
+									
+									});
+
+							});
+
+						})
+
+
+						.catch( function ( err ){
+							function TimeoutHandler()
+							{
+							  clearTimeout(id);
+							  console.log ('CLEAR');
+							}
+
+							var id;
+							id = setTimeout(TimeoutHandler, 2000);
+							console.log ('SET');
+						});		
 
 				}else{
 
