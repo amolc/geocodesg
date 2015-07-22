@@ -1,6 +1,7 @@
 var mysql 			= require( "mysql" )
 ,	NodeGeocoder	= require( "node-geocoder" )
 ,	geocoder 		= require('node-geocoder')('google')
+,	geolib			= require('geolib')
 ,	CRUD 			= require('mysql-crud')
 ,	db 				= mysql.createPool( {
 						"host": 'n2.transparent.sg',
@@ -9,9 +10,10 @@ var mysql 			= require( "mysql" )
 						"database": 'transparent'
 					} )
 
-, crudUnit 			= CRUD( db, 'tag_unit' )
-, crudMRT			= CRUD( db, 'tag_mrt');
+, 	crudUnit 		= CRUD( db, 'tag_unit' )
+, 	crudMRT			= CRUD( db, 'tag_mrt');
 
+var mrt1 = {}, mrt2 = {};
 
 
 module.exports = {
@@ -20,21 +22,22 @@ module.exports = {
 		crudUnit.load({}, function ( err, val ){
 			
 			val.map ( function ( data ){
-				if( data.longitude === '0' && data.latitude === '0' ){
+				if( data.longitude === '0' && data.latitude === '0' || data.areacode === '0'){
 
 					geocoder.geocode ( data.address1 + ", " + data.country )
 
 						.then ( function ( res ) {
 
 							res.map ( function ( pin ) {
-								
+
 								crudUnit.update(
 									{
 										'unit_id': data.unit_id
 									},
 									{
 										'latitude': pin.latitude,
-										'longitude': pin.longitude
+										'longitude': pin.longitude,
+										'areacode': pin.zipcode
 
 									}, function ( err, vals ){
 
@@ -50,12 +53,11 @@ module.exports = {
 							function TimeoutHandler()
 							{
 							  clearTimeout(id);
-							  console.log ('CLEAR');
 							}
 
 							var id;
 							id = setTimeout(TimeoutHandler, 2000);
-							console.log ('SET');
+							
 						});		
 
 					
@@ -70,6 +72,9 @@ module.exports = {
 	},
 
 	"getMRTs": function getMRTs ( callback, param ){
+
+		var mrt1 = {};
+		var mrt2 = {};
 
 		crudMRT.load({}, function ( err, val ){
 			
@@ -97,6 +102,8 @@ module.exports = {
 									
 									});
 
+
+
 							});
 
 						})
@@ -106,12 +113,12 @@ module.exports = {
 							function TimeoutHandler()
 							{
 							  clearTimeout(id);
-							  console.log ('CLEAR');
+						
 							}
 
 							var id;
 							id = setTimeout(TimeoutHandler, 2000);
-							console.log ('SET');
+						
 						});		
 
 				}else{
@@ -121,6 +128,93 @@ module.exports = {
 			
 		});
 
+	},
+
+	"getMRTDistance": function getMRTDistance ( callback , param ){
+		
+
+		crudUnit.load({}, function ( err, val ){
+			
+			val.map ( function ( data ){
+
+				if( data.MRT1 != '0' && data.MRT2 != '0' ){
+
+
+					geocoder.geocode ( data.MRT1 + ", Singapore" )
+
+						.then ( function ( res ) {
+
+							res.map ( function ( pin ) {
+							
+								mrt1 = {
+									latitude: pin.latitude,
+									longitude: pin.longitude
+								};
+
+
+							});
+
+							geocoder.geocode ( data.MRT2 + ", Singapore" )
+
+								.then ( function ( res ) {
+
+									res.map ( function ( pin ) {
+									
+										mrt2 = {
+											latitude: pin.latitude,
+											longitude: pin.longitude
+										};
+
+									});
+
+									var result = geolib.getDistance( mrt1, mrt2 ) * 0.001;
+									
+
+										var query = "UPDATE tag_unit SET MRT_distance_km = '"+ result +"' WHERE unit_id = '"+ data.unit_id +"' ";
+										db.query ( query , function ( err, rows , fields ){
+											console.log( rows );
+										});
+
+								})
+
+
+								.catch( function ( err ){
+									function TimeoutHandler()
+									{
+									  clearTimeout(id);
+								
+									}
+
+									var id;
+									id = setTimeout(TimeoutHandler, 2000);
+								
+								});		
+
+						})
+
+
+						.catch( function ( err ){
+							function TimeoutHandler()
+							{
+							  clearTimeout(id);
+						
+							}
+
+							var id;
+							id = setTimeout(TimeoutHandler, 2000);
+						
+						});	
+
+
+
+
+
+				}
+
+			});
+		});
 	}
 
 };
+
+

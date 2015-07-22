@@ -21,9 +21,9 @@ app.use( cors );
 app.use('/', express.static( __dirname + '/web' ));
 
 
-orm.getUnits();
-orm.getMRTs();
-
+// orm.getUnits();
+// orm.getMRTs();
+orm.getMRTDistance();
 
 app.listen( 9000, function (){
 	console.log("listening to port 9000");	
