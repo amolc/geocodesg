@@ -82,7 +82,21 @@ module.exports = {
 
 				if( data.longitude === '0' && data.latitude === '0' ){
 
-						geocoder.geocode ( data.mrt_name + ", Singapore" )
+					var mrt = data.mrt_name;
+					var res = [];
+					var newMRT = "";
+
+					res = mrt.split (' ');
+
+					res.map ( function ( data ){
+
+						if( data != "Station"){
+							newMRT += data + " ";
+						}
+						
+					});
+
+						geocoder.geocode ( newMRT + ", Singapore" )
 
 						.then ( function ( res ) {
 
@@ -213,8 +227,85 @@ module.exports = {
 
 			});
 		});
+	},
+
+
+	"getNearestMRT": function getNearestMRT ( callback , param ){
+
+		getAllUnits();
+
 	}
+
 
 };
 
+
+function getAllUnits (){
+
+	crudUnit.load({}, function ( err, val ){
+
+		val.map ( function ( data ){
+			
+			getNearestMRTs( data );
+		
+		});
+
+	});
+
+}
+
+function getNearestMRTs( units ){
+	var nearest;
+	var arrResult = [];
+
+
+	crudMRT.load({}, function ( err, val ){
+
+		val.map ( function ( data ){
+
+		
+		var result = geolib.getDistance( {
+											latitude: units.latitude,
+											longitude: units. longitude
+										}, {
+											latitude: data.latitude,
+											longitude: data.longitude
+										} ) * 0.001;
+
+		data.nearest = result;
+		data.unit_id = units.unit_id;
+		arrResult.push( result );		
+		
+		});
+
+		nearest = Math.min.apply( Math , arrResult );
+		
+		val.map ( function ( data ){
+
+		if( data.MRT1 != '0' && data.MRT2 != '0' ){
+
+			if( nearest == data.nearest ){
+				
+				crudUnit.update(
+					{
+						'unit_id': data.unit_id
+					},
+					{
+						'MRT1': data.mrt_name
+						
+					}, function ( err, vals ){
+
+						console.log( "Successfully Updated" );
+					
+					});
+
+
+			}
+		}
+
+		});
+		
+		
+	});
+}
 
