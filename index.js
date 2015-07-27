@@ -21,9 +21,9 @@ app.use( cors );
 app.use('/', express.static( __dirname + '/web' ));
 
 
-// orm.getUnits();
-// orm.getMRTs();
-// orm.getMRTDistance();
+orm.getUnits();
+orm.getMRTs();
+orm.getMRTDistance();
 orm.getNearestMRT();
 
 app.listen( 9000, function (){
