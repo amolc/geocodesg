@@ -2,6 +2,7 @@ var mysql 			= require( "mysql" )
 ,	NodeGeocoder	= require( "node-geocoder" )
 ,	geocoder 		= require('node-geocoder')('google')
 ,	geolib			= require('geolib')
+,	_				= require('lodash')
 ,	CRUD 			= require('mysql-crud')
 ,	db 				= mysql.createPool( {
 						"host": 'n2.transparent.sg',
@@ -234,6 +235,14 @@ module.exports = {
 
 		getAllUnits();
 
+	},
+
+	"sample": function sample ( callback , param ){
+
+		var array = [0.210,2.211,2.33,1.01,1.41,5.90,0.10,1.81].sort();
+		var top3 = array.slice(0,3);
+		console.log( array );
+		console.log( top3 );
 	}
 
 
@@ -257,53 +266,49 @@ function getAllUnits (){
 function getNearestMRTs( units ){
 	var nearest;
 	var arrResult = [];
-
+	var newResult = [];
 
 	crudMRT.load({}, function ( err, val ){
 
 		val.map ( function ( data ){
 
-		
-		var result = geolib.getDistance( {
-											latitude: units.latitude,
-											longitude: units. longitude
-										}, {
-											latitude: data.latitude,
-											longitude: data.longitude
-										} ) * 0.001;
+			var result = geolib.getDistance( {
+												latitude: units.latitude,
+												longitude: units. longitude
+											}, {
+												latitude: data.latitude,
+												longitude: data.longitude
+											} ) * 0.001;
+			
 
-		data.nearest = result;
-		data.unit_id = units.unit_id;
-		arrResult.push( result );		
+			arrResult.push( {
+				unit_id: data.unit_id,
+				MRT_Name: data.mrt_name,
+				nearest: result
+			} );	
 		
 		});
 
-		nearest = Math.min.apply( Math , arrResult );
-		
-		val.map ( function ( data ){
+		_.map(_.sortByOrder( arrResult , ['nearest'], ['asc']), 
+			function ( values ){
+				newResult.push( values );
+			});
 
-		if( data.MRT1 != '0' && data.MRT2 != '0' ){
-
-			if( nearest == data.nearest ){
+			crudUnit.update(
+			{
+				'unit_id': units.unit_id
+			},
+			{
+				'MRT1': newResult[0].MRT_Name,
+				'MRT2': newResult[1].MRT_Name,
+				'MRT3': newResult[2].MRT_Name,
 				
-				crudUnit.update(
-					{
-						'unit_id': data.unit_id
-					},
-					{
-						'MRT1': data.mrt_name
-						
-					}, function ( err, vals ){
+			}, function ( err, vals ){
 
-						console.log( "Successfully Updated" );
-					
-					});
+				console.log( "Successfully Updated" );
+			
+			});
 
-
-			}
-		}
-
-		});
 		
 		
 	});
