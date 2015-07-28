@@ -187,7 +187,7 @@ module.exports = {
 
 										var query = "UPDATE tag_unit SET MRT_distance_km = '"+ result +"' WHERE unit_id = '"+ data.unit_id +"' ";
 										db.query ( query , function ( err, rows , fields ){
-											console.log( rows );
+											//console.log( "Successfully Updated" );
 										});
 
 								})
@@ -264,6 +264,7 @@ function getAllUnits (){
 }
 
 function getNearestMRTs( units ){
+	
 	var nearest;
 	var arrResult = [];
 	var newResult = [];
@@ -280,9 +281,7 @@ function getNearestMRTs( units ){
 												longitude: data.longitude
 											} ) * 0.001;
 			
-
 			arrResult.push( {
-				unit_id: data.unit_id,
 				MRT_Name: data.mrt_name,
 				nearest: result
 			} );	
@@ -292,16 +291,19 @@ function getNearestMRTs( units ){
 		_.map(_.sortByOrder( arrResult , ['nearest'], ['asc']), 
 			function ( values ){
 				newResult.push( values );
+				
 			});
-
+			var unique = _.uniq(newResult, 'MRT_Name');
+			
+			console.log( units.unit_id );
 			crudUnit.update(
 			{
 				'unit_id': units.unit_id
 			},
 			{
-				'MRT1': newResult[0].MRT_Name,
-				'MRT2': newResult[1].MRT_Name,
-				'MRT3': newResult[2].MRT_Name,
+				'MRT1': unique[0].MRT_Name,
+				'MRT2': unique[1].MRT_Name,
+				'MRT3': unique[2].MRT_Name,
 				
 			}, function ( err, vals ){
 
